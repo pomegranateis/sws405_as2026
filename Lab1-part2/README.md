@@ -111,8 +111,6 @@ index=* sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational" "*.aspx*"
 
 ![alt text](img/13.png)
 ![alt text](img/14.png)
-![alt text](img/15.png)
-![alt text](img/16.png)
 
 **Q8. What is the web shell the exploit deployed to the system?**
 Answer: `i3gfPctK1c2x.aspx` (located at `C:\Program Files\Microsoft\Exchange Server\V15\FrontEnd\HttpProxy\owa\auth\`)
