@@ -60,11 +60,12 @@ volatility --plugins=$HOME/volatility-plugins -f MemoryDump_Lab2.raw --profile=W
 
 ```
 .
+├── .gitignore                ← excludes memory images and process dumps
 ├── README.md
 ├── REPORT.md                 ← the assignment report
 ├── screenshots/              ← labelled evidence screenshots (L.N.png = Figure L.N)
 └── memlabs/
-    ├── out/                  ← full, unfiltered output of every Volatility plugin run
+    ├── out/                  ← full, unfiltered output of the main Volatility plugin runs
     ├── Lab1..Lab5/dump/      ← artefacts recovered from memory (archives, images, scripts, KeePass DB…)
     ├── Lab2/mega/            ← Important.zip fetched from the link found in Chrome history
     ├── scripts/              ← helper scripts (see below)

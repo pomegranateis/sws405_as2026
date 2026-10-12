@@ -34,7 +34,7 @@ The aim of this assignment was to analyse the RAM dumps from the [MemLabs](https
 
 ### 1.2 Method
 
-Every lab followed the same Part B checklist instead of going straight for a flag:
+Each lab was worked through the same Part B checklist instead of going straight for a flag. Steps that did not fit a lab's scenario were skipped (for example, hashdump was only needed in Lab 1):
 
 1. **Scope**: identify the OS profile (`imageinfo`).
 2. **Processes**: what was running (`pslist`, `pstree`).
@@ -53,7 +53,7 @@ Each lab section has the same five parts:
 - **Dead Ends**: what was tried and ruled out.
 - **Forensic Reasoning**: why each plugin was the right choice.
 
-*Note on screenshots: every figure is labelled "Figure L.N", where L is the lab number and N the step in that lab's investigation log. Commands in the logs are shown exactly as typed. Long outputs were filtered with grep so the relevant lines are readable; the unfiltered outputs are in the memlabs/out/ folder.*
+*Note on screenshots: every figure is labelled "Figure L.N", where L is the lab number and N the step in that lab's investigation log. Commands in the logs are shown exactly as typed. Long outputs were filtered with grep so the relevant lines are readable; the unfiltered output of the main plugin runs is kept in the memlabs/out/ folder.*
 
 ---
 
@@ -540,6 +540,7 @@ $ cd ~/Desktop/SWS405/SWS405_a2/memlabs/Lab4
 - **filescan** finds FILE_OBJECT structures in kernel pool memory. It can still list a file whose object was left behind after the file was closed or deleted.
 - **dumpfiles** does not read the file from disk. It can only rebuild a file from data pages that the Windows cache manager still holds in RAM (the DataSectionObject, ImageSectionObject or SharedCacheMap). For Important.txt those pages were gone, so there was nothing to write out.
 - **mftparser** reads the NTFS Master File Table. Each file has a 1 KB MFT record, and when a file is very small (roughly under 700 bytes) NTFS stores its contents inside that record as a resident $DATA attribute instead of in separate clusters. The MFT record for Important.txt was still in memory, so mftparser could print the file's content even though the file could not be dumped.
+- **Was the file actually deleted?** mftparser marks record 60583 as `In Use & File`, so at the time of the capture Important.txt itself had not been deleted. The scenario's "at least one Desktop file was deleted" comes from the challenge text. What made the file hard to recover was not deletion but that its data pages had dropped out of the cache.
 
 In short, a file being listed does not mean its data can be recovered. You have to look for another copy of the data, and for small files the MFT is that copy.
 
@@ -570,9 +571,12 @@ $ cd ~/Desktop/SWS405/SWS405_a2/memlabs/Lab5
      $ volatility --plugins=... chromehistory
         → empty table, no Chrome history (dead end)
 5.5  $ ... iehistory | grep -i ZmxhZ3
-        → Pictures\ZmxhZ3shIV93M0xMX2Qwbj...EhfQ.bmp
+        → 6 hits: ...MNEJfM19...bmp (once, Pictures\) and ...MNEJfNV9...bmp
+          (five times, Pictures\ and C:\Windows\AppPatch\)
 5.6  $ echo ZmxhZ3shIV93M0xMX2QwbjNfU3Q0ZzMtMV8wZl9MNEJfM19EMG4zXyEhfQ== | base64 -d
-        → flag{!!_w3LL_d0n3_St4g3-1_0f_L4B_3_D0n3_!!}  -> corrected to L4B_5 per Note-2  -> FLAG 1
+        → flag{!!_w3LL_d0n3_St4g3-1_0f_L4B_3_D0n3_!!}  (L4B_3 version)
+     note: the other five hits differ only in 'M19' -> 'NV9', i.e. '3_' -> '5_',
+           so they decode to ..._L4B_5_D0n3_!!}, which Note-2 confirms  -> FLAG 1
 5.7  $ unrar x -p'flag{!!_w3LL_d0n3_St4g3-1_0f_L4B_5_D0n3_!!}' dump/SW1wb3J0YW50.rar dump/
         → All OK
 5.8  $ xdg-open dump/Stage2.png
@@ -603,11 +607,13 @@ $ cd ~/Desktop/SWS405/SWS405_a2/memlabs/Lab5
 
 ![Figure 5.5](screenshots/5.5.png)
 
-*Figure 5.5 – iehistory: a visited file with a long, Base64-encoded .bmp filename.*
+*Figure 5.5 – iehistory: six visited .bmp files with long Base64 filenames. The first hit encodes the L4B_3 version of the flag; the other five encode the L4B_5 version.*
 
 ![Figure 5.6](screenshots/5.6.png)
 
-*Figure 5.6 – Decoding the filename gives the stage-1 flag (corrected from L4B_3 to L4B_5 as the README says).*
+*Figure 5.6 – Decoding the first hit gives the L4B_3 version of the stage-1 flag.*
+
+**Two versions of the flag.** Memory holds two different filenames. The first hit, in `Pictures\`, decodes to `..._L4B_3_D0n3_!!}`; the other five, in `Pictures\` and `C:\Windows\AppPatch\`, differ only in `M19` → `NV9` (`3_` → `5_`) and decode to `..._L4B_5_D0n3_!!}`. The L4B_3 entry appears only once, while the L4B_5 version appears in both folders. The README's Note-2 ("change _L4B_3_D0n3_!! to _L4B_5_D0n3_!!") confirms that L4B_5 is the correct flag, and it is the one that opens the archive (Figure 5.7).
 
 > **Lab 5 – Flag 1:** `flag{!!_w3LL_d0n3_St4g3-1_0f_L4B_5_D0n3_!!}`
 
@@ -625,7 +631,7 @@ $ cd ~/Desktop/SWS405/SWS405_a2/memlabs/Lab5
 
 ### 8.4 Dead Ends
 
-- **chromehistory**: empty table; Chrome was not used on this machine.
+- **chromehistory**: empty table; Chrome was not used on this machine. (This output was not saved to memlabs/out/.)
 
 ### 8.5 Forensic Reasoning
 
@@ -633,7 +639,7 @@ $ cd ~/Desktop/SWS405/SWS405_a2/memlabs/Lab5
 
 **Choice of browser-history plugin.** Because the process list showed nothing malicious, the next step was to widen the search to browsing history. I used the built-in iehistory plugin. This system's history is held in Internet Explorer's WinINet index.dat cache files, which also record file:// paths opened through Explorer. The chromehistory plugin used in Lab 2 only parses Google Chrome's SQLite History database, which does not exist on this machine.
 
-**Spotting the flag.** A long filename starting with "ZmxhZ3" (Base64 for "flag{") stood out among the normal URLs. Decoding it gave the first flag, which was also the archive password.
+**Spotting the flag.** Long filenames starting with "ZmxhZ3" (Base64 for "flag{") stood out among the normal URLs. Two versions of the filename were recorded; the L4B_5 version, confirmed by Note-2, was the first flag and also the archive password.
 
 ---
 
@@ -652,4 +658,4 @@ All ten flags from Labs 1–5 were recovered from the memory images alone. The s
 | Browser history | chromehistory, iehistory | 2, 5 |
 | MFT records (resident file data) | mftparser | 4 |
 
-I followed the Part B checklist instead of jumping straight to the flag. Because of that, dead ends such as the Lab 4 decoy image were recognised quickly and documented, and every flag can be traced back to a specific plugin and artefact shown in the figures above.
+I worked through the Part B checklist instead of jumping straight to the flag. Because of that, dead ends such as the Lab 4 decoy image were recognised quickly and documented, and every flag can be traced back to a specific plugin and artefact shown in the figures above.

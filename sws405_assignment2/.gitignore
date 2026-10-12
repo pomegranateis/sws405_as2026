@@ -1,0 +1,7 @@
+# MemLabs memory images (~1 GB each) - download from https://github.com/stuxnet999/MemLabs
+*.raw
+*.7z
+# Process memory dumps (e.g. the 254 MB mspaint dump 2424.dmp)
+*.dmp
+# Intermediate dumpfiles output before renaming
+file.None.*.dat
