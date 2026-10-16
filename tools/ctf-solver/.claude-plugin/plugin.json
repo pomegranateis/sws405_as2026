@@ -1,0 +1,7 @@
+{
+  "name": "ctf-solver",
+  "description": "Agentic Jeopardy-CTF solving toolkit: a triage router, per-category playbook skills (crypto, rev, pwn, web, forensics, misc), a recon-and-flag-grep core, and a one-shot toolchain bootstrap.",
+  "version": "0.1.0",
+  "author": { "name": "Saroj" },
+  "keywords": ["ctf", "security", "capture-the-flag", "forensics", "crypto"]
+}
